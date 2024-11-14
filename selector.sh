@@ -57,6 +57,7 @@ function multi_selector () {
   get_cursor_row()    { IFS=';' read -sdR -p $'\E[6n' ROW COL; echo ${ROW#*[}; }
 
   local return_value=$1
+  # https://git.savannah.gnu.org/cgit/bash.git/tree/NEWS?h=bash-5.0
   local -n options=$2
   local -n defaults=$3
 

@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/local/bin/bash
 
 . $(dirname $0)/selector.sh
 
@@ -16,6 +16,8 @@ app_list=(
   epidemic-investigation-frontend
   portrait-portal-frontend
   "multi-info-frontend 多维、潍坊应用"
+  video-portal-frontend
+  video-sysconfig-frontend
   "video-application-frontend 智能视频服务平台"
   "video-application-frontend-xc 老联网、信创"
 )
@@ -38,6 +40,7 @@ start () {
       build_script="yarn build:ga"
     elif [ $app_name = "efacecloud-frontend" ]; then
       build_script="yarn build:faceUni"
+
     elif [ \
       $app_name = "viid-data-frontend" -o \
       $app_name = "epidemic-investigation-frontend" -o \
@@ -49,16 +52,25 @@ start () {
       work_dir="$base_dir/temp/$app_name"
       ssh_server="root@172.25.21.205"
       target_dir="/opt/frontend/micro-multi-frontend/$app_name"
-    elif [ $app_name = "video-application-frontend" ]; then
-      work_dir="$base_dir/temp/$app_name"
-      ssh_server="root@172.25.23.56"
+
+    elif [ \
+      $app_name = "video-portal-frontend" -o \
+      $app_name = "video-sysconfig-frontend" -o \
+      $app_name = "video-application-frontend" \
+    ]; then
+      work_dir="$base_dir/pcitech/$app_name"
+      ssh_server="root@172.25.20.174"
       target_dir="/opt/video/$app_name"
+      after_script="sh $target_dir/bin/run.sh restart"
+
     elif [ $app_name = "video-application-frontend-xc" ]; then
+      build_script="yarn build"
       work_dir="$base_dir/temp/video-application-frontend"
       dest_dir="dist/*" # 将dist目录下的所有文件拷贝到$target_dir
       ssh_server="root@172.25.20.25"
-      target_dir="/opt/uspp-web/apache-tomcat-7.0.109/webapps/video-application-frontend-xc"
-      backup_dir="../dist--$(date '+%Y%m%d%H%M')"
+      target_dir="/opt/uspp-web/apache-tomcat-7.0.109/webapps/portal/video-application-frontend-xc"
+      # target_dir="/opt/uspp-web/apache-tomcat-7.0.109/webapps/video-application-frontend-xc"
+      backup_dir="/opt/uspp-web/apache-tomcat-7.0.109/webapps/dist--$(date '+%Y%m%d%H%M')"
       after_script=""
 
     fi
@@ -142,7 +154,7 @@ deploy_app () {
     --exclude=*.sh \
     --backup \
     --backup-dir=$backup_dir $source_dir $ssh_server:$target_dir && \
-      echo "[$app_name] 正在部署" && $after_script
+      echo "[$app_name] 正在部署" && eval $after_script
 
   if [ $? -eq 0 ]; then
     echo "[$app_name] 部署成功"
@@ -181,7 +193,7 @@ do
       ;;
     -v)
       echo "请选择需要部署的应用："
-      select item in ${app_list[@]}
+      select item in "${app_list[@]}"
       do
         if [ "$item" = "" ]; then
           echo "请选择正确选项！"
